@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Under Construction</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a2e;
+            color: #e6e6e6;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #4cc9f0;
+        }
+        h2 {
+            color: #4cc9f0;
+            margin-bottom: 15px;
+        }
+        p {
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            color: #b3b3b3;
+        }
+        .icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            color: #f7b801;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #4361ee;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 10px;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #3a56d4;
+        }
+        .progress-container {
+            background-color: #2a2a42;
+            border-radius: 10px;
+            height: 20px;
+            width: 80%;
+            margin: 30px auto;
+        }
+        .progress-bar {
+            background-color: #4cc9f0;
+            height: 20px;
+            border-radius: 10px;
+            width: 65%;
+        }
+        .game-container {
+            margin-top: 50px;
+            padding: 20px;
+            background-color: #16213e;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        .game-canvas {
+            border: 1px solid #2a2a42;
+            background-color: #121212;
+        }
+        .divider {
+            margin: 40px 0;
+            border: 0;
+            height: 1px;
+            background-image: linear-gradient(to right, rgba(76, 201, 240, 0), rgba(76, 201, 240, 0.3), rgba(76, 201, 240, 0));
+        }
+        .game-instructions {
+            color: #b3b3b3;
+            background-color: #202038;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 20px auto;
+            max-width: 400px;
+        }
+
+        /* Mobile responsiveness */
+        @media screen and (max-width: 600px) {
+            .container {
+                padding: 20px 10px;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            .progress-container {
+                width: 95%;
+            }
+            .game-canvas {
+                width: 100%;
+                max-width: 350px;
+                height: auto;
+                aspect-ratio: 1/1;
+            }
+            .btn {
+                display: block;
+                margin: 10px auto;
+                max-width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">🚧</div>
+        <h1>Project Under Construction</h1>
+        <p>I'm currently working hard to bring this project to life. Check back soon to see the finished product!</p>
+        
+        <div class="progress-container">
+            <div class="progress-bar"></div>
+        </div>
+        <p>Project completion: ~65%</p>
+        
+        <a href="../index.html" class="btn">Back to Portfolio</a>
+        <a href="mailto:fs.natoli@gmail.com" class="btn">Get Project Updates</a>
+        
+        <hr class="divider">
+        
+        <div class="game-container">
+            <h2>While you wait, enjoy a quick game of Snake!</h2>
+            <div class="game-instructions">
+                <p style="margin: 5px 0;"><strong>How to play:</strong><br>
+                Desktop: Use arrow keys or WASD<br>
+                Mobile: Swipe in any direction<br>
+                Click/tap on game to start</p>
+            </div>
+            <canvas id="gameCanvas" class="game-canvas" width="400" height="400"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // Simple Snake Game
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Make canvas responsive
+            function resizeCanvas() {
+                if (window.innerWidth < 600) {
+                    const containerWidth = Math.min(window.innerWidth - 40, 350);
+                    canvas.width = containerWidth;
+                    canvas.height = containerWidth;
+                } else {
+                    canvas.width = 400;
+                    canvas.height = 400;
+                }
+            }
+            
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Game settings
+            const gridSize = canvas.width / 20;
+            const tileCount = 20;
+            let speed = 7;
+            
+            // Snake initial position and velocity
+            let snakeX = 10;
+            let snakeY = 10;
+            const snakeParts = [];
+            let tailLength = 5;
+            
+            // Velocity
+            let xVelocity = 0;
+            let yVelocity = 0;
+            
+            // Food position
+            let foodX = 5;
+            let foodY = 5;
+            
+            // Score
+            let score = 0;
+            
+            // Game loop
+            function drawGame() {
+                changeSnakePosition();
+                let result = isGameOver();
+                if(result) {
+                    return;
+                }
+                
+                clearScreen();
+                checkFoodCollision();
+                drawFood();
+                drawSnake();
+                drawScore();
+                
+                setTimeout(drawGame, 1000/speed);
+            }
+            
+            function isGameOver() {
+                let gameOver = false;
+                
+                // Check if game has started
+                if(xVelocity === 0 && yVelocity === 0) {
+                    return false;
+                }
+                
+                // Walls
+                if(snakeX < 0 || snakeX >= tileCount || snakeY < 0 || snakeY >= tileCount) {
+                    gameOver = true;
+                }
+                
+                // Self collision
+                for(let i = 0; i < snakeParts.length; i++) {
+                    let part = snakeParts[i];
+                    if(part.x === snakeX && part.y === snakeY) {
+                        gameOver = true;
+                        break;
+                    }
+                }
+                
+                if(gameOver) {
+                    ctx.fillStyle = "#e6e6e6";
+                    ctx.font = `${canvas.width/10}px Verdana`;
+                    ctx.fillText("Game Over!", canvas.width / 6.5, canvas.height / 2);
+                    
+                    // Reset button
+                    ctx.fillStyle = "#4361ee";
+                    ctx.fillRect(canvas.width/2 - 50, canvas.height/2 + 20, 100, 40);
+                    ctx.fillStyle = "#e6e6e6";
+                    ctx.font = `${canvas.width/20}px Verdana`;
+                    ctx.fillText("Reset", canvas.width/2 - 30, canvas.height/2 + 45);
+                    
+                    // Add click event for reset
+                    canvas.addEventListener('click', checkResetClick);
+                }
+                
+                return gameOver;
+            }
+            
+            function checkResetClick(event) {
+                const rect = canvas.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                
+                // Check if click is within reset button
+                if (x >= canvas.width/2 - 50 && x <= canvas.width/2 + 50 &&
+                    y >= canvas.height/2 + 20 && y <= canvas.height/2 + 60) {
+                    resetGame();
+                    canvas.removeEventListener('click', checkResetClick);
+                }
+            }
+            
+            // Keyboard controls
+            document.body.addEventListener('keydown', keyDown);
+            
+            function keyDown(event) {
+                // Prevent default behavior for arrow keys to stop page scrolling
+                if([37, 38, 39, 40].includes(event.keyCode)) {
+                    event.preventDefault();
+                }
+                
+                // Up
+                if(event.keyCode == 38 || event.keyCode == 87) {
+                    if(yVelocity != 1) {
+                        yVelocity = -1;
+                        xVelocity = 0;
+                    }
+                }
+                
+                // Down
+                if(event.keyCode == 40 || event.keyCode == 83) {
+                    if(yVelocity != -1) {
+                        yVelocity = 1;
+                        xVelocity = 0;
+                    }
+                }
+                
+                // Left
+                if(event.keyCode == 37 || event.keyCode == 65) {
+                    if(xVelocity != 1) {
+                        yVelocity = 0;
+                        xVelocity = -1;
+                    }
+                }
+                
+                // Right
+                if(event.keyCode == 39 || event.keyCode == 68) {
+                    if(xVelocity != -1) {
+                        yVelocity = 0;
+                        xVelocity = 1;
+                    }
+                }
+            }
+            
+            function resetGame() {
+                snakeX = 10;
+                snakeY = 10;
+                xVelocity = 0;
+                yVelocity = 0;
+                tailLength = 5;
+                score = 0;
+                snakeParts.length = 0;
+                placeFood();
+                drawGame();
+            }
+            
+            function drawScore() {
+                ctx.fillStyle = "#4cc9f0";
+                ctx.font = `${canvas.width/28}px Verdana`;
+                ctx.fillText("Score: " + score, 10, 20);
+            }
+            
+            function clearScreen() {
+                ctx.fillStyle = "#121212";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+            
+            function drawSnake() {
+                // Draw snake parts
+                ctx.fillStyle = "#4cc9f0";
+                for(let i = 0; i < snakeParts.length; i++) {
+                    let part = snakeParts[i];
+                    ctx.fillRect(part.x * gridSize, part.y * gridSize, gridSize - 2, gridSize - 2);
+                }
+                
+                // Add new snake part
+                snakeParts.push({x: snakeX, y: snakeY});
+                if(snakeParts.length > tailLength) {
+                    snakeParts.shift();
+                }
+                
+                // Draw snake head
+                ctx.fillStyle = "#4361ee";
+                ctx.fillRect(snakeX * gridSize, snakeY * gridSize, gridSize - 2, gridSize - 2);
+            }
+            
+            function changeSnakePosition() {
+                snakeX += xVelocity;
+                snakeY += yVelocity;
+            }
+            
+            function drawFood() {
+                ctx.fillStyle = "#f72585";
+                ctx.fillRect(foodX * gridSize, foodY * gridSize, gridSize - 2, gridSize - 2);
+            }
+            
+            function checkFoodCollision() {
+                if(foodX === snakeX && foodY === snakeY) {
+                    placeFood();
+                    tailLength++;
+                    score += 10;
+                    // Increase speed slightly
+                    if(speed < 15) {
+                        speed += 0.2;
+                    }
+                }
+            }
+            
+            function placeFood() {
+                // Random position for food
+                foodX = Math.floor(Math.random() * tileCount);
+                foodY = Math.floor(Math.random() * tileCount);
+                
+                // Don't place food on snake
+                for(let i = 0; i < snakeParts.length; i++) {
+                    let part = snakeParts[i];
+                    if(part.x === foodX && part.y === foodY) {
+                        placeFood(); // try again
+                        return;
+                    }
+                }
+            }
+            
+            // Mobile/touch controls
+            let touchStartX = 0;
+            let touchStartY = 0;
+            
+            canvas.addEventListener('touchstart', function(e) {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                e.preventDefault();
+            }, false);
+            
+            canvas.addEventListener('touchmove', function(e) {
+                e.preventDefault();
+            }, false);
+            
+            canvas.addEventListener('touchend', function(e) {
+                let touchEndX = e.changedTouches[0].clientX;
+                let touchEndY = e.changedTouches[0].clientY;
+                
+                let x = touchEndX - touchStartX;
+                let y = touchEndY - touchStartY;
+                
+                // Determine swipe direction
+                if(Math.abs(x) > Math.abs(y)) {
+                    // Horizontal swipe
+                    if(x > 0) {
+                        // Right swipe
+                        if(xVelocity != -1) {
+                            xVelocity = 1;
+                            yVelocity = 0;
+                        }
+                    } else {
+                        // Left swipe
+                        if(xVelocity != 1) {
+                            xVelocity = -1;
+                            yVelocity = 0;
+                        }
+                    }
+                } else {
+                    // Vertical swipe
+                    if(y > 0) {
+                        // Down swipe
+                        if(yVelocity != -1) {
+                            yVelocity = 1;
+                            xVelocity = 0;
+                        }
+                    } else {
+                        // Up swipe
+                        if(yVelocity != 1) {
+                            yVelocity = -1;
+                            xVelocity = 0;
+                        }
+                    }
+                }
+                
+                e.preventDefault();
+            }, false);
+            
+            // Instructions
+            ctx.fillStyle = "#e6e6e6";
+            ctx.font = `${canvas.width/25}px Verdana`;
+            ctx.fillText("Use arrow keys or swipe to play", canvas.width/2 - 120, canvas.height/2);
+            ctx.fillText("Click/tap here to start", canvas.width/2 - 90, canvas.height/2 + 30);
+            
+            // Start game on click
+            canvas.addEventListener('click', function() {
+                if(xVelocity === 0 && yVelocity === 0) {
+                    xVelocity = 1;
+                    yVelocity = 0;
+                }
+            });
+            
+            placeFood();
+            drawGame();
+        });
+    </script>
+</body>
+</html>
