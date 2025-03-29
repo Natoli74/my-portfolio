@@ -59,7 +59,7 @@ const Hero = () => {
         <a href="https://www.linkedin.com/in/natoli74/" target='_blank' className="w-50">
           <Button name="Let's Connect" isBeam containerClass="sm:w-fit w-full sm:min-w-96" />
         </a>
-        <a href="../resume.pdf" className="w-50" download>
+        <a href="/resume.pdf" className="w-50" download>
           <Button name="Download Resume" isBeam containerClass="sm:w-fit w-full sm:min-w-96" />
         </a>
 
